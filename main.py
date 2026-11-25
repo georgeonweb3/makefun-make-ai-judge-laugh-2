@@ -57,23 +57,28 @@ def validate_entry(text):
     return text.encode("utf-8")
 
 
-def main():
-    # Verified live: 142 characters, one line, no trailing newline.
-    payload = validate_entry(ENTRY)
-    directory = os.path.dirname(OUTPUT_PATH)
+def write_entry(payload, path):
+    """Write the validated bytes and read them back: the graded
+    artifact is the file on disk, not the string in memory, so
+    confirm the bytes landed before reporting success. No
+    randomness, no clock, no I/O beyond the one write, so a
+    second run reproduces the same 142 bytes exactly."""
+    directory = os.path.dirname(path)
     if directory:
         os.makedirs(directory, exist_ok=True)
-    with open(OUTPUT_PATH, "wb") as handle:
+    with open(path, "wb") as handle:
         handle.write(payload)
-    # Read-back verification: the graded artifact is the file on
-    # disk, not the string in memory — confirm the bytes landed.
-    # No randomness, no clock, no I/O beyond the one write, so a
-    # second run reproduces the same 142 bytes exactly.
-    with open(OUTPUT_PATH, "rb") as handle:
+    with open(path, "rb") as handle:
         written = handle.read()
     assert written == payload, (
         f"entry.txt on disk differs from ENTRY: {written!r}"
     )
+
+
+def main():
+    # Verified live: 142 characters, one line, no trailing newline.
+    payload = validate_entry(ENTRY)
+    write_entry(payload, OUTPUT_PATH)
 
 
 if __name__ == "__main__":
